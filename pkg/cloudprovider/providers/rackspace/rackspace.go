@@ -37,6 +37,7 @@ import (
 )
 
 const ProviderName = "rackspace"
+const ProviderDMIName = ""
 
 var ErrNotFound = errors.New("Failed to find object")
 var ErrMultipleResults = errors.New("Multiple results where only one expected")
@@ -89,13 +90,14 @@ type Config struct {
 }
 
 func init() {
-	cloudprovider.RegisterCloudProvider(ProviderName, func(config io.Reader) (cloudprovider.Interface, error) {
-		cfg, err := readConfig(config)
-		if err != nil {
-			return nil, err
-		}
-		return newRackspace(cfg)
-	})
+	cloudprovider.RegisterCloudProvider(ProviderName, ProviderDMIName,
+		func(config io.Reader) (cloudprovider.Interface, error) {
+			cfg, err := readConfig(config)
+			if err != nil {
+				return nil, err
+			}
+			return newRackspace(cfg)
+		})
 }
 
 func (cfg Config) toAuthOptions() gophercloud.AuthOptions {

@@ -49,6 +49,7 @@ import (
 )
 
 const ProviderName = "aws"
+const ProviderDMIName = "amazon"
 
 // The tag name we use to differentiate multiple logically independent clusters running in the same AZ
 const TagNameKubernetesCluster = "KubernetesCluster"
@@ -435,18 +436,19 @@ func (s *awsSdkEC2) ModifyInstanceAttribute(request *ec2.ModifyInstanceAttribute
 }
 
 func init() {
-	cloudprovider.RegisterCloudProvider(ProviderName, func(config io.Reader) (cloudprovider.Interface, error) {
-		creds := credentials.NewChainCredentials(
-			[]credentials.Provider{
-				&credentials.EnvProvider{},
-				&ec2rolecreds.EC2RoleProvider{
-					Client: ec2metadata.New(session.New(&aws.Config{})),
-				},
-				&credentials.SharedCredentialsProvider{},
-			})
-		aws := &awsSDKProvider{creds: creds}
-		return newAWSCloud(config, aws)
-	})
+	cloudprovider.RegisterCloudProvider(ProviderName, ProviderDMIName,
+		func(config io.Reader) (cloudprovider.Interface, error) {
+			creds := credentials.NewChainCredentials(
+				[]credentials.Provider{
+					&credentials.EnvProvider{},
+					&ec2rolecreds.EC2RoleProvider{
+						Client: ec2metadata.New(session.New(&aws.Config{})),
+					},
+					&credentials.SharedCredentialsProvider{},
+				})
+			aws := &awsSDKProvider{creds: creds}
+			return newAWSCloud(config, aws)
+		})
 }
 
 // readAWSCloudConfig reads an instance of AWSCloudConfig from config reader.

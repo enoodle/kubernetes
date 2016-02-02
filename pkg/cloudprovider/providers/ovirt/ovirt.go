@@ -35,6 +35,7 @@ import (
 )
 
 const ProviderName = "ovirt"
+const ProviderDMIName = ""
 
 type OVirtInstance struct {
 	UUID      string
@@ -78,7 +79,7 @@ type XmlVmsList struct {
 }
 
 func init() {
-	cloudprovider.RegisterCloudProvider(ProviderName,
+	cloudprovider.RegisterCloudProvider(ProviderName, ProviderDMIName,
 		func(config io.Reader) (cloudprovider.Interface, error) {
 			return newOVirtCloud(config)
 		})

@@ -45,7 +45,8 @@ import (
 )
 
 const (
-	ProviderName = "gce"
+	ProviderName    = "gce"
+	ProviderDMIName = "Google"
 
 	k8sNodeRouteTag = "k8s-node-route"
 
@@ -80,7 +81,8 @@ type Config struct {
 }
 
 func init() {
-	cloudprovider.RegisterCloudProvider(ProviderName, func(config io.Reader) (cloudprovider.Interface, error) { return newGCECloud(config) })
+	cloudprovider.RegisterCloudProvider(ProviderName, ProviderDMIName,
+		func(config io.Reader) (cloudprovider.Interface, error) { return newGCECloud(config) })
 }
 
 func getProjectAndZone() (string, string, error) {

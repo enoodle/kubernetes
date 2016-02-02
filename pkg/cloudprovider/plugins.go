@@ -19,11 +19,15 @@ package cloudprovider
 import (
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
+	"strings"
 	"sync"
 
 	"github.com/golang/glog"
 )
+
+const BiosVersionFileName = "/sys/class/dmi/id/bios_version"
 
 // Factory is a function that returns a cloudprovider.Interface.
 // The config parameter provides an io.Reader handler to the factory in
@@ -34,10 +38,11 @@ type Factory func(config io.Reader) (Interface, error)
 // All registered cloud providers.
 var providersMutex sync.Mutex
 var providers = make(map[string]Factory)
+var dmiProviderNames = make(map[string]string)
 
 // RegisterCloudProvider registers a cloudprovider.Factory by name.  This
 // is expected to happen during app startup.
-func RegisterCloudProvider(name string, cloud Factory) {
+func RegisterCloudProvider(name string, dmiName string, cloud Factory) {
 	providersMutex.Lock()
 	defer providersMutex.Unlock()
 	if _, found := providers[name]; found {
@@ -45,6 +50,9 @@ func RegisterCloudProvider(name string, cloud Factory) {
 	}
 	glog.V(1).Infof("Registered cloud provider %q", name)
 	providers[name] = cloud
+	if dmiName != "" {
+		dmiProviderNames[dmiName] = name
+	}
 }
 
 // GetCloudProvider creates an instance of the named cloud provider, or nil if
@@ -62,14 +70,37 @@ func GetCloudProvider(name string, config io.Reader) (Interface, error) {
 	return f(config)
 }
 
+func AutodetectCloudProvider() (string, error) {
+	bios_ver_r, err := ioutil.ReadFile(BiosVersionFileName)
+	if err != nil {
+		return "", err
+	}
+
+	bios_ver := string(bios_ver_r)
+	for dmiName, name := range dmiProviderNames {
+		if strings.Contains(bios_ver, dmiName) {
+			return name, nil
+		}
+	}
+	return "", nil
+}
+
 // InitCloudProvider creates an instance of the named cloud provider.
 func InitCloudProvider(name string, configFilePath string) (Interface, error) {
 	var cloud Interface
 	var err error
 
 	if name == "" {
-		glog.Info("No cloud provider specified.")
-		return nil, nil
+		glog.Info("No cloud provider specified - Attempting auto detecting")
+		if name, err = AutodetectCloudProvider(); err != nil {
+			return nil, fmt.Errorf("could not detect cloud provider: %v", err)
+		}
+		if name == "" {
+			glog.Info("Could not detect cloud provider")
+			return nil, nil
+		} else {
+			glog.Info("Autodetected cloud provider: %s", name)
+		}
 	}
 
 	if configFilePath != "" {

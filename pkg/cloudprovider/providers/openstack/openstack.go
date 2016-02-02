@@ -49,6 +49,7 @@ import (
 )
 
 const ProviderName = "openstack"
+const ProviderDMIName = ""
 
 // metadataUrl is URL to OpenStack metadata server. It's hadrcoded IPv4
 // link-local address as documented in "OpenStack Cloud Administrator Guide",
@@ -116,13 +117,14 @@ type Config struct {
 }
 
 func init() {
-	cloudprovider.RegisterCloudProvider(ProviderName, func(config io.Reader) (cloudprovider.Interface, error) {
-		cfg, err := readConfig(config)
-		if err != nil {
-			return nil, err
-		}
-		return newOpenStack(cfg)
-	})
+	cloudprovider.RegisterCloudProvider(ProviderName, ProviderDMIName,
+		func(config io.Reader) (cloudprovider.Interface, error) {
+			cfg, err := readConfig(config)
+			if err != nil {
+				return nil, err
+			}
+			return newOpenStack(cfg)
+		})
 }
 
 func (cfg Config) toAuthOptions() gophercloud.AuthOptions {

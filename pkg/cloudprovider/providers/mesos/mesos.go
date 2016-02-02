@@ -31,7 +31,8 @@ import (
 )
 
 const (
-	ProviderName = "mesos"
+	ProviderName    = "mesos"
+	ProviderDMIName = ""
 
 	// KubernetesExecutorName is shared between contrib/mesos and Mesos cloud provider.
 	// Because cloud provider -> contrib dependencies are forbidden, this constant
@@ -48,6 +49,7 @@ var (
 func init() {
 	cloudprovider.RegisterCloudProvider(
 		ProviderName,
+		ProviderDMIName,
 		func(configReader io.Reader) (cloudprovider.Interface, error) {
 			provider, err := newMesosCloud(configReader)
 			if err == nil {
